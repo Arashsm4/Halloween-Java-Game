@@ -1,4 +1,4 @@
-package lostinbabuland;// SceneManager.java - Manages scene transitions for the "Lost in Babuland" game.
+package lostinbabuland; // SceneManager.java - Manages scene transitions for the "Lost in Babuland" game.
 import javafx.animation.FadeTransition;
 import javafx.util.Duration;
 import javafx.stage.Stage;
@@ -10,6 +10,8 @@ import javafx.scene.control.Label;
 public class SceneManager {
     // Holds the primary stage for scene switching
     private static Stage primaryStage;
+    // Total number of mini-game scenes (for dynamic management)
+    private static final int TOTAL_MINI_GAMES = 8;
 
     // Private constructor to prevent instantiation (utility class pattern)
     private SceneManager() { }
@@ -140,123 +142,80 @@ public class SceneManager {
     }
 
     /**
-     * Switch to Mini-Game 1 scene.
+     * Switch to a Mini-Game scene by number. Allows dynamic addition or removal of mini-games.
+     * @param gameNumber the mini-game number (1 to TOTAL_MINI_GAMES)
      */
-    public static void goToMiniGame1() {
+    public static void goToMiniGame(int gameNumber) {
         checkStageInitialized();
+        // Validate game number
+        if (gameNumber < 1 || gameNumber > TOTAL_MINI_GAMES) {
+            throw new IllegalArgumentException("Invalid mini game number: " + gameNumber);
+        }
+        // Create content for the mini-game scene
         StackPane gameRoot = new StackPane();
-        gameRoot.getChildren().add(new Label("Mini-Game 1 Scene (placeholder)"));
+        gameRoot.getChildren().add(new Label("Mini-Game " + gameNumber + " Scene (placeholder)"));
         Scene gameScene = new Scene(gameRoot, 800, 600);
         primaryStage.setScene(gameScene);
         if (!primaryStage.isShowing()) {
             primaryStage.show();
         }
         applyFadeTransition(gameRoot);
+    }
+
+    /**
+     * Switch to Mini-Game 1 scene.
+     */
+    public static void goToMiniGame1() {
+        goToMiniGame(1);
     }
 
     /**
      * Switch to Mini-Game 2 scene.
      */
     public static void goToMiniGame2() {
-        checkStageInitialized();
-        StackPane gameRoot = new StackPane();
-        gameRoot.getChildren().add(new Label("Mini-Game 2 Scene (placeholder)"));
-        Scene gameScene = new Scene(gameRoot, 800, 600);
-        primaryStage.setScene(gameScene);
-        if (!primaryStage.isShowing()) {
-            primaryStage.show();
-        }
-        applyFadeTransition(gameRoot);
+        goToMiniGame(2);
     }
 
     /**
      * Switch to Mini-Game 3 scene.
      */
     public static void goToMiniGame3() {
-        checkStageInitialized();
-        StackPane gameRoot = new StackPane();
-        gameRoot.getChildren().add(new Label("Mini-Game 3 Scene (placeholder)"));
-        Scene gameScene = new Scene(gameRoot, 800, 600);
-        primaryStage.setScene(gameScene);
-        if (!primaryStage.isShowing()) {
-            primaryStage.show();
-        }
-        applyFadeTransition(gameRoot);
+        goToMiniGame(3);
     }
 
     /**
      * Switch to Mini-Game 4 scene.
      */
     public static void goToMiniGame4() {
-        checkStageInitialized();
-        StackPane gameRoot = new StackPane();
-        gameRoot.getChildren().add(new Label("Mini-Game 4 Scene (placeholder)"));
-        Scene gameScene = new Scene(gameRoot, 800, 600);
-        primaryStage.setScene(gameScene);
-        if (!primaryStage.isShowing()) {
-            primaryStage.show();
-        }
-        applyFadeTransition(gameRoot);
+        goToMiniGame(4);
     }
 
     /**
      * Switch to Mini-Game 5 scene.
      */
     public static void goToMiniGame5() {
-        checkStageInitialized();
-        StackPane gameRoot = new StackPane();
-        gameRoot.getChildren().add(new Label("Mini-Game 5 Scene (placeholder)"));
-        Scene gameScene = new Scene(gameRoot, 800, 600);
-        primaryStage.setScene(gameScene);
-        if (!primaryStage.isShowing()) {
-            primaryStage.show();
-        }
-        applyFadeTransition(gameRoot);
+        goToMiniGame(5);
     }
 
     /**
      * Switch to Mini-Game 6 scene.
      */
     public static void goToMiniGame6() {
-        checkStageInitialized();
-        StackPane gameRoot = new StackPane();
-        gameRoot.getChildren().add(new Label("Mini-Game 6 Scene (placeholder)"));
-        Scene gameScene = new Scene(gameRoot, 800, 600);
-        primaryStage.setScene(gameScene);
-        if (!primaryStage.isShowing()) {
-            primaryStage.show();
-        }
-        applyFadeTransition(gameRoot);
+        goToMiniGame(6);
     }
 
     /**
      * Switch to Mini-Game 7 scene.
      */
     public static void goToMiniGame7() {
-        checkStageInitialized();
-        StackPane gameRoot = new StackPane();
-        gameRoot.getChildren().add(new Label("Mini-Game 7 Scene (placeholder)"));
-        Scene gameScene = new Scene(gameRoot, 800, 600);
-        primaryStage.setScene(gameScene);
-        if (!primaryStage.isShowing()) {
-            primaryStage.show();
-        }
-        applyFadeTransition(gameRoot);
+        goToMiniGame(7);
     }
 
     /**
      * Switch to Mini-Game 8 scene.
      */
     public static void goToMiniGame8() {
-        checkStageInitialized();
-        StackPane gameRoot = new StackPane();
-        gameRoot.getChildren().add(new Label("Mini-Game 8 Scene (placeholder)"));
-        Scene gameScene = new Scene(gameRoot, 800, 600);
-        primaryStage.setScene(gameScene);
-        if (!primaryStage.isShowing()) {
-            primaryStage.show();
-        }
-        applyFadeTransition(gameRoot);
+        goToMiniGame(8);
     }
 
     /**
