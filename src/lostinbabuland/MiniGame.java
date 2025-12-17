@@ -1,9 +1,8 @@
-// MiniGame.java - interface for mini-game modules
+// src/lostinbabuland/MiniGame.java
 package lostinbabuland;
 
+import javafx.stage.Stage;
+
 public interface MiniGame {
-    // Start the mini-game (initialize gameplay)
-    void startGame();
-    // End the mini-game (cleanup and transition)
-    void endGame();
+    void start(Stage stage);
 }
