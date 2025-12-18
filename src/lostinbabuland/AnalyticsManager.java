@@ -1,343 +1,337 @@
-// src/lostinbabuland/AnalyticsManager.java
 package lostinbabuland;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.time.LocalDateTime;
+import java.nio.file.*;
+import java.util.Locale;
 
-public final class AnalyticsManager {
+public class AnalyticsManager {
 
-    public static final class Snapshot {
-        public final long totalMs;
-        public final long topViewMs;
-        public final long sideViewMs;
+    private long sessionStartNs;
+    private long lastFrameNs;
 
-        public final int viewSwitches;
-        public final int gemsCollected;
-        public final int candiesCollected;
-        public final int enemiesDefeated;
-        public final int attacks;
-        public final int hitsTaken;
-        public final int deaths;
-        public final int wallBumps;
-        public final int holeTriggers;
+    private double elapsedSec;
+    private double fps;
+    private int frames;
 
-        public final int playerShotsFired;
-        public final int playerShotsHit;
-        public final int enemyShotsFired;
-        public final int enemyShotsHit;
+    private double memMB;
+    private double peakMemMB;
 
-        public final double distanceTraveled;
-        public final long stationaryMs;
-        public final long exposureMs;
-
-        public final int uniqueTilesVisited;
-        public final int walkableTilesTotal;
-
-        public final long timeToFirstSwitchMs; // -1 if never switched
-        public final long timeToGemMs;         // -1 if never collected
-
-        public final long currentUsedBytes;
-        public final long peakUsedBytes;
-
-        public final double playerAccuracy;    // 0..1
-        public final double enemyAccuracy;     // 0..1
-        public final double explorationRatio;  // 0..1
-        public final double hesitationRatio;   // 0..1  (stationary / total)
-        public final double exposureRatio;     // 0..1  (threat exposure / total)
-        public final double actionsPerMinute;  // APM-ish
-
-        private Snapshot(long totalMs, long topViewMs, long sideViewMs,
-                         int viewSwitches, int gemsCollected, int candiesCollected,
-                         int enemiesDefeated, int attacks, int hitsTaken, int deaths,
-                         int wallBumps, int holeTriggers,
-                         int playerShotsFired, int playerShotsHit,
-                         int enemyShotsFired, int enemyShotsHit,
-                         double distanceTraveled, long stationaryMs, long exposureMs,
-                         int uniqueTilesVisited, int walkableTilesTotal,
-                         long timeToFirstSwitchMs, long timeToGemMs,
-                         long currentUsedBytes, long peakUsedBytes) {
-
-            this.totalMs = totalMs;
-            this.topViewMs = topViewMs;
-            this.sideViewMs = sideViewMs;
-
-            this.viewSwitches = viewSwitches;
-            this.gemsCollected = gemsCollected;
-            this.candiesCollected = candiesCollected;
-            this.enemiesDefeated = enemiesDefeated;
-            this.attacks = attacks;
-            this.hitsTaken = hitsTaken;
-            this.deaths = deaths;
-            this.wallBumps = wallBumps;
-            this.holeTriggers = holeTriggers;
-
-            this.playerShotsFired = playerShotsFired;
-            this.playerShotsHit = playerShotsHit;
-            this.enemyShotsFired = enemyShotsFired;
-            this.enemyShotsHit = enemyShotsHit;
-
-            this.distanceTraveled = distanceTraveled;
-            this.stationaryMs = stationaryMs;
-            this.exposureMs = exposureMs;
-
-            this.uniqueTilesVisited = uniqueTilesVisited;
-            this.walkableTilesTotal = walkableTilesTotal;
-
-            this.timeToFirstSwitchMs = timeToFirstSwitchMs;
-            this.timeToGemMs = timeToGemMs;
-
-            this.currentUsedBytes = currentUsedBytes;
-            this.peakUsedBytes = peakUsedBytes;
-
-            this.playerAccuracy = playerShotsFired <= 0 ? 0.0 : (playerShotsHit / (double) playerShotsFired);
-            this.enemyAccuracy  = enemyShotsFired  <= 0 ? 0.0 : (enemyShotsHit  / (double) enemyShotsFired);
-
-            this.explorationRatio = walkableTilesTotal <= 0 ? 0.0 : (uniqueTilesVisited / (double) walkableTilesTotal);
-
-            double t = Math.max(1, totalMs);
-            this.hesitationRatio = clamp01(stationaryMs / (double) t);
-            this.exposureRatio   = clamp01(exposureMs / (double) t);
-
-            double minutes = totalMs / 60000.0;
-            if (minutes <= 0) minutes = 1e-9;
-            int actions = attacks + viewSwitches + candiesCollected + gemsCollected + enemiesDefeated;
-            this.actionsPerMinute = actions / minutes;
-        }
-
-        private static double clamp01(double v) {
-            if (v < 0) return 0;
-            if (v > 1) return 1;
-            return v;
-        }
-    }
-
-    private long sessionStartMs;
-    private long lastViewSwitchMs;
     private String currentView = "TOP";
-    private long topViewMs;
-    private long sideViewMs;
+    private double topTimeSec;
+    private double sideTimeSec;
 
-    private int viewSwitches;
-    private int gemsCollected;
-    private int candiesCollected;
-    private int enemiesDefeated;
-    private int hitsTaken;
-    private int deaths;
-    private int attacks;
-    private int wallBumps;
-    private int holeTriggers;
+    private int switches;
+    private int rotations;
 
-    private int playerShotsFired;
-    private int playerShotsHit;
-    private int enemyShotsFired;
-    private int enemyShotsHit;
+    private int playerShots;
+    private int playerHits;
+    private int enemyShots;
+    private int enemyHits;
 
-    private double distanceTraveled;
-    private long stationaryMs;
-    private long exposureMs;
+    private int candies;
+    private int gems;
 
-    private int uniqueTilesVisited;
-    private int walkableTilesTotal;
+    private int bumps;
+    private double dist;
 
-    private long timeToFirstSwitchMs = -1;
-    private long timeToGemMs = -1;
+    private int actions;     // for APM
+    private double idleSec;  // time without movement or shooting
 
-    private long currentUsedBytes;
-    private long peakUsedBytes;
+    private boolean underThreat;
+    private double threatSec;
 
-    private boolean ended;
+    private double threatStartSec = -1;
+    private double reactionSum = 0;
+    private int reactionCount = 0;
 
-    public void startSession(String initialView) {
-        ended = false;
-        sessionStartMs = System.currentTimeMillis();
-        lastViewSwitchMs = sessionStartMs;
-        currentView = initialView == null ? "TOP" : initialView;
+    private int mapW, mapH;
+    private boolean[] visited;
+    private int visitedCount;
 
-        topViewMs = 0;
-        sideViewMs = 0;
+    private double lastX = Double.NaN, lastY = Double.NaN;
 
-        viewSwitches = 0;
-        gemsCollected = 0;
-        candiesCollected = 0;
-        enemiesDefeated = 0;
-        hitsTaken = 0;
-        deaths = 0;
-        attacks = 0;
-        wallBumps = 0;
-        holeTriggers = 0;
+    public void resetSession(int mapW, int mapH) {
+        this.mapW = mapW;
+        this.mapH = mapH;
+        this.visited = new boolean[mapW * mapH];
+        this.visitedCount = 0;
 
-        playerShotsFired = 0;
-        playerShotsHit = 0;
-        enemyShotsFired = 0;
-        enemyShotsHit = 0;
+        sessionStartNs = System.nanoTime();
+        lastFrameNs = sessionStartNs;
 
-        distanceTraveled = 0;
-        stationaryMs = 0;
-        exposureMs = 0;
+        elapsedSec = 0;
+        fps = 0;
+        frames = 0;
 
-        uniqueTilesVisited = 0;
-        walkableTilesTotal = 0;
+        memMB = 0;
+        peakMemMB = 0;
 
-        timeToFirstSwitchMs = -1;
-        timeToGemMs = -1;
+        currentView = "TOP";
+        topTimeSec = 0;
+        sideTimeSec = 0;
 
-        currentUsedBytes = 0;
-        peakUsedBytes = 0;
-        sampleMemory();
+        switches = 0;
+        rotations = 0;
+
+        playerShots = 0;
+        playerHits = 0;
+        enemyShots = 0;
+        enemyHits = 0;
+
+        candies = 0;
+        gems = 0;
+
+        bumps = 0;
+        dist = 0;
+
+        actions = 0;
+        idleSec = 0;
+
+        underThreat = false;
+        threatSec = 0;
+
+        threatStartSec = -1;
+        reactionSum = 0;
+        reactionCount = 0;
+
+        lastX = Double.NaN;
+        lastY = Double.NaN;
     }
 
-    public void recordAttack() { attacks++; }
-    public void recordGemCollected() {
-        gemsCollected++;
-        if (timeToGemMs < 0) timeToGemMs = System.currentTimeMillis() - sessionStartMs;
-    }
-    public void recordCandyCollected() { candiesCollected++; }
-    public void recordEnemyDefeated() { enemiesDefeated++; }
-    public void recordHitTaken() { hitsTaken++; }
-    public void recordDeath() { deaths++; }
-    public void recordWallBump() { wallBumps++; }
-    public void recordHoleTrigger() { holeTriggers++; }
-
-    public void recordPlayerShotFired() { playerShotsFired++; }
-    public void recordPlayerShotHit() { playerShotsHit++; }
-    public void recordEnemyShotFired() { enemyShotsFired++; }
-    public void recordEnemyShotHit() { enemyShotsHit++; }
-
-    public void addDistance(double d) { distanceTraveled += Math.max(0, d); }
-    public void addStationaryMs(long ms) { stationaryMs += Math.max(0, ms); }
-    public void addExposureMs(long ms) { exposureMs += Math.max(0, ms); }
-
-    public void setTileStats(int uniqueVisited, int walkableTotal) {
-        uniqueTilesVisited = Math.max(0, uniqueVisited);
-        walkableTilesTotal = Math.max(0, walkableTotal);
+    public void onStart() {
+        sessionStartNs = System.nanoTime();
+        lastFrameNs = sessionStartNs;
     }
 
-    public void recordViewSwitch(String newView) {
-        if (ended) return;
+    public void onFrame(double dt) {
+        frames++;
+        elapsedSec += dt;
 
-        if (timeToFirstSwitchMs < 0) {
-            timeToFirstSwitchMs = System.currentTimeMillis() - sessionStartMs;
+        // fps (smoothed)
+        double instFps = (dt > 1e-9) ? (1.0 / dt) : 0;
+        fps = fps == 0 ? instFps : (fps * 0.93 + instFps * 0.07);
+
+        // memory
+        Runtime rt = Runtime.getRuntime();
+        long used = rt.totalMemory() - rt.freeMemory();
+        memMB = used / 1024.0 / 1024.0;
+        if (memMB > peakMemMB) peakMemMB = memMB;
+    }
+
+    public void onTick(double dt, String view, double px, double py, boolean moving, boolean threatNow) {
+        currentView = view;
+
+        if ("TOP".equals(view)) topTimeSec += dt;
+        else sideTimeSec += dt;
+
+        if (!moving && playerShots == 0 && elapsedSec < 2) {
+            // ignore first seconds
         }
 
-        accumulateViewTime();
-        currentView = newView;
-        lastViewSwitchMs = System.currentTimeMillis();
-        viewSwitches++;
-    }
+        if (!moving && !threatNow) idleSec += dt;
 
-    public void sampleMemory() {
-        long used = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-        currentUsedBytes = used;
-        if (used > peakUsedBytes) peakUsedBytes = used;
-    }
-
-    public Snapshot snapshot() {
-        long now = System.currentTimeMillis();
-        long total = now - sessionStartMs;
-
-        long tTop = topViewMs;
-        long tSide = sideViewMs;
-
-        if (!ended) {
-            long delta = now - lastViewSwitchMs;
-            if ("TOP".equals(currentView)) tTop += delta;
-            else tSide += delta;
-        }
-
-        return new Snapshot(
-                total, tTop, tSide,
-                viewSwitches, gemsCollected, candiesCollected,
-                enemiesDefeated, attacks, hitsTaken, deaths,
-                wallBumps, holeTriggers,
-                playerShotsFired, playerShotsHit,
-                enemyShotsFired, enemyShotsHit,
-                distanceTraveled, stationaryMs, exposureMs,
-                uniqueTilesVisited, walkableTilesTotal,
-                timeToFirstSwitchMs, timeToGemMs,
-                currentUsedBytes, peakUsedBytes
-        );
-    }
-
-    public void endSession(String reason) {
-        if (ended) return;
-        ended = true;
-
-        accumulateViewTime();
-        long endMs = System.currentTimeMillis();
-        Snapshot s = snapshot();
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("\n==== Halloween JavaFX Session ====\n");
-        sb.append("Time: ").append(LocalDateTime.now()).append("\n");
-        sb.append("Reason: ").append(reason == null ? "unknown" : reason).append("\n");
-
-        sb.append("TotalPlayMs: ").append(s.totalMs).append("\n");
-        sb.append("TopViewMs: ").append(s.topViewMs).append("\n");
-        sb.append("SideViewMs: ").append(s.sideViewMs).append("\n");
-        sb.append("ViewSwitches: ").append(s.viewSwitches).append("\n");
-
-        sb.append("GemsCollected: ").append(s.gemsCollected).append("\n");
-        sb.append("CandiesCollected: ").append(s.candiesCollected).append("\n");
-        sb.append("EnemiesDefeated: ").append(s.enemiesDefeated).append("\n");
-
-        sb.append("Attacks: ").append(s.attacks).append("\n");
-        sb.append("HitsTaken: ").append(s.hitsTaken).append("\n");
-        sb.append("Deaths: ").append(s.deaths).append("\n");
-
-        sb.append("WallBumps: ").append(s.wallBumps).append("\n");
-        sb.append("HoleTriggers: ").append(s.holeTriggers).append("\n");
-
-        sb.append("PlayerShotsFired: ").append(s.playerShotsFired).append("\n");
-        sb.append("PlayerShotsHit: ").append(s.playerShotsHit).append("\n");
-        sb.append("EnemyShotsFired: ").append(s.enemyShotsFired).append("\n");
-        sb.append("EnemyShotsHit: ").append(s.enemyShotsHit).append("\n");
-
-        sb.append("PlayerAccuracy: ").append(String.format("%.3f", s.playerAccuracy)).append("\n");
-        sb.append("EnemyAccuracy: ").append(String.format("%.3f", s.enemyAccuracy)).append("\n");
-
-        sb.append("DistanceTraveled: ").append(String.format("%.2f", s.distanceTraveled)).append("\n");
-        sb.append("StationaryMs: ").append(s.stationaryMs).append("\n");
-        sb.append("ExposureMs: ").append(s.exposureMs).append("\n");
-
-        sb.append("UniqueTilesVisited: ").append(s.uniqueTilesVisited).append("\n");
-        sb.append("WalkableTilesTotal: ").append(s.walkableTilesTotal).append("\n");
-        sb.append("ExplorationRatio: ").append(String.format("%.3f", s.explorationRatio)).append("\n");
-
-        sb.append("TimeToFirstSwitchMs: ").append(s.timeToFirstSwitchMs).append("\n");
-        sb.append("TimeToGemMs: ").append(s.timeToGemMs).append("\n");
-
-        sb.append("ActionsPerMinute: ").append(String.format("%.2f", s.actionsPerMinute)).append("\n");
-
-        sb.append("PeakUsedMemoryMB: ").append(String.format("%.2f", s.peakUsedBytes / (1024.0 * 1024.0))).append("\n");
-        sb.append("=================================\n");
-
-        writeToFile(sb.toString());
-    }
-
-    private void accumulateViewTime() {
-        long now = System.currentTimeMillis();
-        long delta = now - lastViewSwitchMs;
-        if ("TOP".equals(currentView)) topViewMs += delta;
-        else sideViewMs += delta;
-        lastViewSwitchMs = now;
-    }
-
-    private void writeToFile(String text) {
-        try {
-            Path path = Path.of(System.getProperty("user.home"), "halloween_game_stats.log");
-            try (BufferedWriter w = Files.newBufferedWriter(
-                    path,
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.WRITE,
-                    StandardOpenOption.APPEND
-            )) {
-                w.write(text);
+        if (threatNow) {
+            threatSec += dt;
+            if (!underThreat) {
+                // threat just started
+                threatStartSec = elapsedSec;
             }
+        }
+        underThreat = threatNow;
+
+        // mark visited tile (coarse)
+        int tx = (int)Math.floor(px);
+        int ty = (int)Math.floor(py);
+        markVisited(tx, ty);
+
+        // if threat active and player reacts by moving or shooting later, record reaction time
+        // movement reaction is detected externally via recordMove; shooting via recordPlayerShot
+        if (!threatNow) threatStartSec = -1;
+    }
+
+    public void recordMove(double dt, double px, double py, int tx, int ty) {
+        markVisited(tx, ty);
+        actions++; // movement counts as action in APM (coarse)
+        if (threatStartSec >= 0) {
+            double rt = elapsedSec - threatStartSec;
+            if (rt >= 0.08 && rt <= 5.0) {
+                reactionSum += rt;
+                reactionCount++;
+                threatStartSec = -1;
+            }
+        }
+    }
+
+    public void recordDistance(double d) {
+        dist += d;
+    }
+
+    public void recordSwitch(String newView) {
+        switches++;
+        actions++;
+    }
+
+    public void recordRotate() {
+        rotations++;
+        actions++;
+    }
+
+    public void recordPlayerShot() {
+        playerShots++;
+        actions++;
+        if (threatStartSec >= 0) {
+            double rt = elapsedSec - threatStartSec;
+            if (rt >= 0.08 && rt <= 5.0) {
+                reactionSum += rt;
+                reactionCount++;
+                threatStartSec = -1;
+            }
+        }
+    }
+
+    public void recordEnemyShot() {
+        enemyShots++;
+    }
+
+    public void recordPlayerHit() {
+        playerHits++;
+    }
+
+    public void recordEnemyHit() {
+        enemyHits++;
+    }
+
+    public void recordCandy() {
+        candies++;
+        actions++;
+    }
+
+    public void recordGem() {
+        gems++;
+        actions++;
+    }
+
+    public void recordBump() {
+        bumps++;
+    }
+
+    public void finish(boolean won) {
+        // no-op placeholder for future (could compute final aggregates)
+    }
+
+    public String[] hudLines(int score, int hp, int enemiesAlive, int collectiblesLeft, int camRot) {
+        double apm = elapsedSec > 1 ? (actions / (elapsedSec / 60.0)) : 0;
+
+        double explore = (mapW * mapH > 0) ? (visitedCount * 100.0 / (double)(mapW * mapH)) : 0;
+
+        double pAcc = (playerShots > 0) ? (playerHits * 100.0 / playerShots) : 0;
+        double eAcc = (enemyShots > 0) ? (enemyHits * 100.0 / enemyShots) : 0;
+
+        double topPct = (elapsedSec > 1e-6) ? (topTimeSec * 100.0 / elapsedSec) : 0;
+        double sidePct = (elapsedSec > 1e-6) ? (sideTimeSec * 100.0 / elapsedSec) : 0;
+
+        double threatPct = (elapsedSec > 1e-6) ? (threatSec * 100.0 / elapsedSec) : 0;
+        double idlePct = (elapsedSec > 1e-6) ? (idleSec * 100.0 / elapsedSec) : 0;
+
+        double avgRt = (reactionCount > 0) ? (reactionSum / reactionCount) : -1;
+
+        // Simple “skill” heuristic (bounded-ish)
+        double skill = 0;
+        skill += clamp01(pAcc / 100.0) * 40;
+        skill += clamp01(explore / 100.0) * 25;
+        skill += clamp01((apm / 60.0)) * 20;
+        skill += clamp01((1.0 - idlePct / 100.0)) * 15;
+        int skillInt = (int)Math.round(skill);
+
+        String l1 = String.format(Locale.US,
+                "t=%.0fs  fps=%.1f  mem=%.1fMB (peak %.1fMB)  APM=%.1f  skill=%d",
+                elapsedSec, fps, memMB, peakMemMB, apm, skillInt);
+
+        String l2 = String.format(Locale.US,
+                "P shots %d/%d (%.0f%%) | E shots %d/%d (%.0f%%) | explore %.0f%% | idle %.0f%% | threat %.0f%%",
+                playerHits, playerShots, pAcc,
+                enemyHits, enemyShots, eAcc,
+                explore, idlePct, threatPct);
+
+        String l3 = String.format(Locale.US,
+                "dist=%.0f  switches=%d  rot=%d  candies=%d  gems=%d  bumps=%d  TOP/SIDE=%.0f/%.0f%%  rt=%s",
+                dist, switches, rotations, candies, gems, bumps,
+                topPct, sidePct,
+                (avgRt < 0 ? "-" : String.format(Locale.US, "%.2fs", avgRt))
+        );
+
+        return new String[]{l1, l2, l3};
+    }
+
+    public String[] panelLines() {
+        double pAcc = (playerShots > 0) ? (playerHits * 100.0 / playerShots) : 0;
+        double eAcc = (enemyShots > 0) ? (enemyHits * 100.0 / enemyShots) : 0;
+        double avgRt = (reactionCount > 0) ? (reactionSum / reactionCount) : -1;
+
+        return new String[] {
+                String.format(Locale.US, "Shots: P=%d (hit %d, %.0f%%)  E=%d (hit %d, %.0f%%)", playerShots, playerHits, pAcc, enemyShots, enemyHits, eAcc),
+                String.format(Locale.US, "Switches=%d  Rotations=%d  Bumps=%d", switches, rotations, bumps),
+                String.format(Locale.US, "Candy=%d  Gems=%d  Distance=%.0f", candies, gems, dist),
+                String.format(Locale.US, "Threat=%.0fs  Idle=%.0fs  AvgRT=%s", threatSec, idleSec, (avgRt < 0 ? "-" : String.format(Locale.US, "%.2fs", avgRt))),
+                String.format(Locale.US, "ExploredTiles=%d/%d", visitedCount, mapW * mapH),
+        };
+    }
+
+    public void saveSession(Path file, boolean won) {
+        String header = "timestamp,won,elapsed_sec,fps_avg,mem_peak_mb,view_top_sec,view_side_sec,switches,rotations," +
+                "player_shots,player_hits,enemy_shots,enemy_hits,candies,gems,bumps,distance,actions,apm,threat_sec,idle_sec,explore_pct,avg_reaction_sec\n";
+
+        double apm = elapsedSec > 1 ? (actions / (elapsedSec / 60.0)) : 0;
+        double explorePct = (mapW * mapH > 0) ? (visitedCount * 100.0 / (double)(mapW * mapH)) : 0;
+        double avgRt = (reactionCount > 0) ? (reactionSum / reactionCount) : -1;
+
+        String row = String.format(Locale.US,
+                "%d,%s,%.3f,%.3f,%.3f,%.3f,%.3f,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.3f,%d,%.3f,%.3f,%.3f,%.2f,%s\n",
+                System.currentTimeMillis(),
+                won ? "true" : "false",
+                elapsedSec,
+                fps,
+                peakMemMB,
+                topTimeSec,
+                sideTimeSec,
+                switches,
+                rotations,
+                playerShots,
+                playerHits,
+                enemyShots,
+                enemyHits,
+                candies,
+                gems,
+                bumps,
+                dist,
+                actions,
+                apm,
+                threatSec,
+                idleSec,
+                explorePct,
+                (avgRt < 0 ? "" : String.format(Locale.US, "%.3f", avgRt))
+        );
+
+        try {
+            boolean exists = Files.exists(file);
+            if (!exists) Files.writeString(file, header, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            Files.writeString(file, row, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (IOException ignored) {
         }
+    }
+
+    private void markVisited(int tx, int ty) {
+        if (tx < 0 || ty < 0 || tx >= mapW || ty >= mapH) return;
+        int idx = ty * mapW + tx;
+        if (!visited[idx]) {
+            visited[idx] = true;
+            visitedCount++;
+        }
+    }
+
+    private static double clamp01(double v) {
+        if (v < 0) return 0;
+        if (v > 1) return 1;
+        return v;
     }
 }

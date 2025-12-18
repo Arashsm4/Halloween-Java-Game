@@ -1,4 +1,4 @@
-// src/lostinbabuland/LeadboardScene.java
+
 package lostinbabuland;
 
 import javafx.scene.Scene;

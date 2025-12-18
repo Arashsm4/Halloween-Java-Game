@@ -1,4 +1,4 @@
-// src/lostinbabuland/CandyCatch.java
+
 package lostinbabuland;
 
 import javafx.stage.Stage;

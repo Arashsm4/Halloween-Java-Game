@@ -1,4 +1,4 @@
-// src/lostinbabuland/DanceDanceGame.java
+
 package lostinbabuland;
 
 import javafx.stage.Stage;

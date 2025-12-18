@@ -1,4 +1,4 @@
-// src/lostinbabuland/Gem.java
+
 package lostinbabuland;
 
 import javafx.geometry.Rectangle2D;

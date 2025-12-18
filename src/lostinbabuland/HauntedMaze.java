@@ -1,4 +1,4 @@
-// src/lostinbabuland/HauntedMaze.java
+
 package lostinbabuland;
 
 import javafx.stage.Stage;

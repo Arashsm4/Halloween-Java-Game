@@ -1,4 +1,4 @@
-// src/lostinbabuland/VampireTrivia.java
+
 package lostinbabuland;
 
 import javafx.stage.Stage;

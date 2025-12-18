@@ -1,4 +1,4 @@
-// src/lostinbabuland/SceneManager.java
+
 package lostinbabuland;
 
 import javafx.stage.Stage;

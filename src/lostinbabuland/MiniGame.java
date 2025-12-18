@@ -1,4 +1,4 @@
-// src/lostinbabuland/MiniGame.java
+
 package lostinbabuland;
 
 import javafx.stage.Stage;

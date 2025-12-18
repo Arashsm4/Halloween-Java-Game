@@ -1,4 +1,4 @@
-// src/lostinbabuland/MainMenuScene.java
+
 package lostinbabuland;
 
 import javafx.scene.Scene;

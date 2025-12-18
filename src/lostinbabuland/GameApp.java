@@ -1,4 +1,4 @@
-// src/lostinbabuland/GameApp.java
+
 package lostinbabuland;
 
 import javafx.application.Application;

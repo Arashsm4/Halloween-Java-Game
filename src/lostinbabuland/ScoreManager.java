@@ -1,4 +1,4 @@
-// src/lostinbabuland/ScoreManager.java
+
 package lostinbabuland;
 
 public class ScoreManager {
