@@ -4,6 +4,8 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
+//to be honest making this was also so much pain but it worked somehow
+
 public final class HudRenderer {
     private final Font monoBig = Font.font("Consolas", 22);
     private final Font monoSmall = Font.font("Consolas", 16);

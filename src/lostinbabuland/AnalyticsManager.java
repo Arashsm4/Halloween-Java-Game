@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.Locale;
 
+
+// one of the main things I wanted to implement was this function because it is so much important for me to see how my games run and how it affects the system so I tried implementing this system in order to track them all and in future maybe train my modules based on it.
+
 public class AnalyticsManager {
 
     private long sessionStartNs;
@@ -107,7 +110,7 @@ public class AnalyticsManager {
         frames++;
         elapsedSec += dt;
 
-        // fps (smoothed)
+        // fps
         double instFps = (dt > 1e-9) ? (1.0 / dt) : 0;
         fps = fps == 0 ? instFps : (fps * 0.93 + instFps * 0.07);
 
@@ -125,7 +128,7 @@ public class AnalyticsManager {
         else sideTimeSec += dt;
 
         if (!moving && playerShots == 0 && elapsedSec < 2) {
-            // ignore first seconds
+
         }
 
         if (!moving && !threatNow) idleSec += dt;
@@ -133,19 +136,18 @@ public class AnalyticsManager {
         if (threatNow) {
             threatSec += dt;
             if (!underThreat) {
-                // threat just started
+
                 threatStartSec = elapsedSec;
             }
         }
         underThreat = threatNow;
 
-        // mark visited tile (coarse)
+        // mark visited tile
         int tx = (int)Math.floor(px);
         int ty = (int)Math.floor(py);
         markVisited(tx, ty);
 
-        // if threat active and player reacts by moving or shooting later, record reaction time
-        // movement reaction is detected externally via recordMove; shooting via recordPlayerShot
+
         if (!threatNow) threatStartSec = -1;
     }
 
@@ -216,7 +218,7 @@ public class AnalyticsManager {
     }
 
     public void finish(boolean won) {
-        // no-op placeholder for future (could compute final aggregates)
+
     }
 
     public String[] hudLines(int score, int hp, int enemiesAlive, int collectiblesLeft, int camRot) {
@@ -235,7 +237,7 @@ public class AnalyticsManager {
 
         double avgRt = (reactionCount > 0) ? (reactionSum / reactionCount) : -1;
 
-        // Simple “skill” heuristic (bounded-ish)
+
         double skill = 0;
         skill += clamp01(pAcc / 100.0) * 40;
         skill += clamp01(explore / 100.0) * 25;

@@ -14,3 +14,5 @@ public class GameApp extends Application {
         launch(args);
     }
 }
+
+// big thanks to the creator of the JavaFX but my man your engine got some problems

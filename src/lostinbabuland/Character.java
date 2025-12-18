@@ -3,6 +3,8 @@ package lostinbabuland;
 
 import javafx.geometry.Rectangle2D;
 
+//I'll make it cuter next time
+
 public abstract class Character {
     protected double x, y;
     protected double w, h;

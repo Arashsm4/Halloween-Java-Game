@@ -14,3 +14,4 @@ public class LeadboardScene {
         stage.show();
     }
 }
+//somehow useless

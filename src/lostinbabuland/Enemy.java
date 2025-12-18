@@ -47,7 +47,7 @@ public final class Enemy extends Entity {
                 path = Pathfinder.bfsNextSteps(world, sx, sy, gx, gy, 16000);
                 pathIndex = 0;
             } else {
-                // wander: pick random reachable floor target
+                // pick random reachable floor target
                 for (int tries = 0; tries < 40; tries++) {
                     int tx = 2 + world.rng.nextInt(world.w-4);
                     int ty = 2 + world.rng.nextInt(world.h-4);
@@ -61,7 +61,7 @@ public final class Enemy extends Entity {
             }
         }
 
-        // desired direction = next path node
+        // desired direction
         float ddx = 0f, ddy = 0f;
         if (!path.isEmpty() && pathIndex < path.size()) {
             int[] node = path.get(pathIndex);
@@ -78,7 +78,7 @@ public final class Enemy extends Entity {
         float ndx = MathUtil.normX(ddx, ddy);
         float ndy = MathUtil.normY(ddx, ddy);
 
-        // separation (prevents circling clumps)
+        // separation
         float sepX = 0f, sepY = 0f;
         for (Enemy e : allEnemies) {
             if (e == this || !e.alive) continue;
@@ -102,7 +102,7 @@ public final class Enemy extends Entity {
         float stepX = dirX * GameConfig.ENEMY_SPEED * dt;
         float stepY = dirY * GameConfig.ENEMY_SPEED * dt;
 
-        // collision move (same style as player)
+        // collision move
         float oldX = x, oldY = y;
 
         x += stepX;

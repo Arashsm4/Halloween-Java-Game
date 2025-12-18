@@ -6,7 +6,7 @@ import java.util.Set;
 public final class StatsTracker {
     private float timeSec = 0f;
 
-    // REAL render fps (based on AnimationTimer frame dt)
+    // REAL render fps FINALLLLLLY
     private float renderFpsSmooth = 60f;
     private float memPeakMB = 0f;
 

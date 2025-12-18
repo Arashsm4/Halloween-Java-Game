@@ -7,7 +7,7 @@ public final class Camera {
     public float offY = 0f;
 
     public interface Projector {
-        // returns float[2] screen-space (unscaled, unoffset) coordinates for world point
+        // returns float[2] screen-space coordinates for world point
         float[] project(float wx, float wy);
     }
 

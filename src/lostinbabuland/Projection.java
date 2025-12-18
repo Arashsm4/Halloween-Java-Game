@@ -8,6 +8,7 @@ public final class Projection {
         return (wx, wy) -> new float[]{ wx, wy };
     }
 
+    //pew pew
     public static Camera.Projector sideIso(World world, int rotDeg) {
         float cx = (world.w * GameConfig.TILE) * 0.5f;
         float cy = (world.h * GameConfig.TILE) * 0.5f;

@@ -1,6 +1,8 @@
 
 package lostinbabuland;
 
+//pew pew pew dead
+
 public final class Bullet {
     public float x, y;
     public float vx, vy;

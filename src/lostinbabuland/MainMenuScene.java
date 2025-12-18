@@ -17,3 +17,4 @@ public class MainMenuScene {
         stage.show();
     }
 }
+//somehow useless but neccesary

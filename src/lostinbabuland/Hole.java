@@ -1,6 +1,8 @@
 
 package lostinbabuland;
 
+//great code of hole
+
 public final class Hole {
     public float x, y;
     public Hole(float x, float y) {
@@ -8,3 +10,4 @@ public final class Hole {
         this.y = y;
     }
 }
+

@@ -23,3 +23,5 @@ public class Gem {
     public double y() { return y; }
     public double size() { return size; }
 }
+
+//yum yum gems to eat

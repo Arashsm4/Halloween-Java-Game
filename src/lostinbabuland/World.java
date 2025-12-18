@@ -107,6 +107,7 @@ public final class World {
         placeHoles(GameConfig.HOLE_COUNT, sx, sy, ex, ey);
     }
 
+    //aaaaaaa so much pain
     private void placePickups(PickupType type, int count, int sx, int sy, int ex, int ey) {
         int placed = 0;
         int safety = 0;

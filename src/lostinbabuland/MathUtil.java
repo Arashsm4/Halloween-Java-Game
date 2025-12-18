@@ -1,6 +1,8 @@
 
 package lostinbabuland;
 
+//well it is obvious how I passed the math and software design :))
+
 public final class MathUtil {
     private MathUtil(){}
 

@@ -13,6 +13,9 @@ import javafx.stage.Stage;
 import java.util.ArrayList;
 import java.util.List;
 
+// one of the most challenging stuff I made in my life well not harder than dynamic fluid but again so much pain
+//I'm happy that it worked and jesus last version I wrote 1-2k lines but now that I seprated them it looks clean man
+
 public final class PlatformerSprint {
     private final HudRenderer hud = new HudRenderer();
 

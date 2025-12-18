@@ -4,6 +4,8 @@ package lostinbabuland;
 import java.util.ArrayList;
 import java.util.List;
 
+//well some parts of this I still don't get but thanks to internet it helped me figure out
+
 public final class Collision {
     private Collision(){}
 
